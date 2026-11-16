@@ -1,6 +1,5 @@
 import express from 'express';
-import { readFile, readdir } from 'node:fs/promises';
-import path from 'node:path';
+import { isWorkbookType, isWorkbookYear, workbookExtension } from './workbooks.js';
 import {
   autoMapColumns, detectHeaderRow, extractErrcStatuses, extractSalesValues,
   openWorkbook, parseExcelRows, readSheetMatrix,
@@ -33,7 +32,7 @@ function readErrc(buffer, fileName, year) {
   throw new Error('Jadual data ERRC yang sah tidak ditemui.');
 }
 
-export function createDashboardRouter(directory) {
+export function createDashboardRouter(storage) {
   const router = express.Router();
   router.use((req, res, next) => {
     res.set('Cache-Control', 'no-store');
@@ -41,25 +40,19 @@ export function createDashboardRouter(directory) {
   });
 
   router.param('type', (req, res, next, type) => {
-    if (type !== 'errc' && type !== 'jtppm') return res.sendStatus(404);
-    req.uploadDirectory = type === 'errc' ? directory : path.join(directory, 'jtppm');
+    if (!isWorkbookType(type)) return res.sendStatus(404);
     next();
   });
 
   router.get('/:type', async (req, res) => {
-    const names = await readdir(req.uploadDirectory).catch((error) => {
-      if (error.code === 'ENOENT') return [];
-      throw error;
-    });
-    res.json(names.filter((name) => /^[1-9]\d{3}\.excel$/.test(name))
-      .map((name) => name.slice(0, 4)).sort().reverse());
+    res.json(await storage.list(req.params.type));
   });
 
   router.get('/:type/:year', async (req, res) => {
     const { type, year } = req.params;
-    if (!/^[1-9]\d{3}$/.test(year)) return res.sendStatus(404);
-    const buffer = await readFile(path.join(req.uploadDirectory, year + '.excel'));
-    const extension = buffer.subarray(0, 2).toString() === 'PK' ? 'xlsx' : 'xls';
+    if (!isWorkbookYear(year)) return res.sendStatus(404);
+    const buffer = await storage.read(type, year);
+    const extension = workbookExtension(buffer);
     const fileName = type.toUpperCase() + '-' + year + '.' + extension;
     try {
       const model = type === 'errc'

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/api/admin/:route*", "destination": "/api/backend?scope=admin&route=:route*" },
+    { "source": "/api/dashboard/:route*", "destination": "/api/backend?scope=dashboard&route=:route*" }
+  ]
+}

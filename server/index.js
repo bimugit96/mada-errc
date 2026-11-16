@@ -1,3 +1,4 @@
+import { localWorkbooks } from './workbooks.js';
 import { createDashboardRouter } from './dashboard.js';
 import { createAdminRouter } from './admin.js';
 import express from 'express';
@@ -15,8 +16,9 @@ const staticDir = path.resolve(root, process.env.SERVE_STATIC_DIR || 'dist');
 const app = express();
 app.disable('x-powered-by');
 const uploadDirectory = path.resolve(root, process.env.ADMIN_UPLOAD_DIR || 'data/admin-uploads');
-app.use('/api/admin', createAdminRouter(uploadDirectory));
-app.use('/api/dashboard', createDashboardRouter(uploadDirectory));
+const storage = localWorkbooks(uploadDirectory);
+app.use('/api/admin', createAdminRouter(storage));
+app.use('/api/dashboard', createDashboardRouter(storage));
 
 if (!fs.existsSync(staticDir)) {
   console.warn(

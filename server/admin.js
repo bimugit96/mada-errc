@@ -1,19 +1,22 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { mkdir, open, readdir, rename, rm, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import express from 'express';
 import XLSX from 'xlsx';
+import { isWorkbookType, isWorkbookYear, workbookExtension } from './workbooks.js';
 
-export function createAdminRouter(directory) {
+export function createAdminRouter(storage, {
+  secret = randomBytes(32),
+  password = process.env.ADMIN_PASSWORD || 'admin123',
+  secureCookies = false,
+  maxUploadMB = 25,
+} = {}) {
   const router = express.Router();
-  const secret = randomBytes(32);
   const sessionDuration = 8 * 60 * 60 * 1000;
   const workbookName = /^([1-9]\d{3})\.(xlsx|xls)$/;
   const sign = (value) => createHmac('sha256', secret).update(value).digest('hex');
   const cookieOptions = (req) => ({
     httpOnly: true,
     sameSite: 'strict',
-    secure: req.secure,
+    secure: secureCookies || req.secure,
     path: '/api/admin',
   });
 
@@ -23,7 +26,7 @@ export function createAdminRouter(directory) {
   });
 
   router.post('/login', express.json({ limit: '2kb' }), (req, res) => {
-    if (req.body?.username !== 'admin' || req.body?.password !== 'admin123') {
+    if (req.body?.username !== 'admin' || req.body?.password !== password) {
       return res.status(401).json({ error: 'Nama pengguna atau kata laluan tidak sah.' });
     }
     const expiry = String(Date.now() + sessionDuration);
@@ -49,41 +52,29 @@ export function createAdminRouter(directory) {
   });
 
   router.param('type', (req, res, next, type) => {
-    if (type !== 'errc' && type !== 'jtppm') return res.sendStatus(404);
-    req.uploadDirectory = type === 'errc' ? directory : path.join(directory, 'jtppm');
+    if (!isWorkbookType(type)) return res.sendStatus(404);
     next();
   });
 
   router.get('/files/:type', async (req, res) => {
-    await mkdir(req.uploadDirectory, { recursive: true });
-    const names = await readdir(req.uploadDirectory);
-    res.json(names.filter((name) => /^[1-9]\d{3}\.excel$/.test(name))
-      .map((name) => name.slice(0, 4)).sort().reverse());
+    res.json(await storage.list(req.params.type));
   });
 
-  router.get('/files/:type/:year', async (req, res, next) => {
-    const { year } = req.params;
-    if (!/^[1-9]\d{3}$/.test(year)) return res.sendStatus(404);
-    const file = await open(path.join(req.uploadDirectory, year + '.excel'), 'r');
-    try {
-      const signature = Buffer.alloc(2);
-      await file.read(signature, 0, 2, 0);
-      res.attachment(year + (signature.toString() === 'PK' ? '.xlsx' : '.xls'));
-      file.createReadStream({ start: 0 }).on('error', next).pipe(res);
-    } catch (error) {
-      await file.close();
-      throw error;
-    }
+  router.get('/files/:type/:year', async (req, res) => {
+    const { type, year } = req.params;
+    if (!isWorkbookYear(year)) return res.sendStatus(404);
+    const data = await storage.read(type, year);
+    res.attachment(year + '.' + workbookExtension(data)).send(data);
   });
 
   router.delete('/files/:type/:year', async (req, res) => {
-    const { year } = req.params;
-    if (!/^[1-9]\d{3}$/.test(year)) return res.sendStatus(404);
-    await rm(path.join(req.uploadDirectory, year + '.excel'));
+    const { type, year } = req.params;
+    if (!isWorkbookYear(year)) return res.sendStatus(404);
+    await storage.remove(type, year);
     res.sendStatus(204);
   });
 
-  router.put('/files/:type/:name', express.raw({ type: 'application/octet-stream', limit: '25mb' }), async (req, res) => {
+  router.put('/files/:type/:name', express.raw({ type: 'application/octet-stream', limit: maxUploadMB + 'mb' }), async (req, res) => {
     const match = workbookName.exec(req.params.name);
     if (!match || !Buffer.isBuffer(req.body)) {
       return res.status(400).json({ error: 'Pilih tahun dan fail Excel yang sah.' });
@@ -98,21 +89,14 @@ export function createAdminRouter(directory) {
     } catch {
       return res.status(400).json({ error: 'Fail Excel tidak dapat dibaca.' });
     }
-    await mkdir(req.uploadDirectory, { recursive: true });
-    const temporary = path.join(req.uploadDirectory, '.' + randomBytes(16).toString('hex'));
-    try {
-      await writeFile(temporary, req.body, { flag: 'wx', mode: 0o600 });
-      await rename(temporary, path.join(req.uploadDirectory, year + '.excel'));
-    } finally {
-      await rm(temporary, { force: true });
-    }
+    await storage.write(req.params.type, year, req.body);
     res.sendStatus(204);
   });
 
   router.use((error, req, res, next) => {
     if (res.headersSent) return next(error);
     if (error.code === 'ENOENT') return res.sendStatus(404);
-    if (error.status === 413) return res.status(413).json({ error: 'Saiz fail melebihi had 25 MB.' });
+    if (error.status === 413) return res.status(413).json({ error: `Saiz fail melebihi had ${maxUploadMB} MB.` });
     if (error.status === 400) return res.status(400).json({ error: 'Permintaan tidak sah.' });
     console.error('[admin]', error);
     res.status(500).json({ error: 'Operasi fail gagal.' });
