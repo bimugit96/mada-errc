@@ -16,7 +16,7 @@ import {
 } from 'recharts';
 import { TOOLTIP_STYLE, WILAYAH_COLORS, formatNumber } from '../utils/stats.js';
 
-export default function BarChartCard({ config }) {
+export default function BarChartCard({ config, height = 300 }) {
   const {
     title,
     sub,
@@ -36,9 +36,9 @@ export default function BarChartCard({ config }) {
     <div className="card">
       <div className="card-head">
         <h3 className="card-title">{title}</h3>
-        <p className="card-sub">{sub}</p>
+        {sub ? <p className="card-sub">{sub}</p> : null}
       </div>
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={height}>
         <BarChart
           data={data}
           margin={{ top: labelKey ? 26 : 12, right: 12, left: -14, bottom: 0 }}
@@ -49,18 +49,20 @@ export default function BarChartCard({ config }) {
             dataKey="name"
             tickLine={false}
             axisLine={{ stroke: '#D9E2DC' }}
-            tick={{ fill: '#5D6D63', fontSize: 12 }}
+            tick={{ fill: '#5D6D63', fontSize: 12, fontWeight: 500 }}
             interval={xInterval}
           />
           <YAxis
             domain={yDomain}
             tickLine={false}
             axisLine={false}
-            tick={{ fill: '#5D6D63', fontSize: 12 }}
+            tick={{ fill: '#5D6D63', fontSize: 12, fontWeight: 500 }}
             unit={yUnit}
           />
           <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'rgba(11,93,59,.06)' }} />
-          {!hideLegend && <Legend wrapperStyle={{ fontSize: 12.5 }} />}
+          {!hideLegend && (
+            <Legend wrapperStyle={{ fontSize: 12.5, fontWeight: 600 }} />
+          )}
           {bars.map((bar) => (
             <Bar
               key={bar.key}

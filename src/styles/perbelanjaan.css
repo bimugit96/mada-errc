@@ -1,0 +1,1029 @@
+/* ============================================================
+   MODUL PERBELANJAAN - Prestasi Kewangan (Muat Naik Excel)
+   ============================================================ */
+
+.fin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- Kepala halaman ---------- */
+.fin-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.fin-head-text {
+  min-width: 0;
+}
+
+.fin-head-text h2 {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.fin-head-text p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+/* ---------- Baris muat naik Excel ---------- */
+.fin-uploadbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+
+.fin-uploadbar-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.fin-uploadbar-side {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-left: auto;
+}
+.fin-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  border-radius: 9px;
+  white-space: nowrap;
+}
+
+.fin-upload-btn .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.fin-upload-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.fin-upload-hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  min-width: 0;
+}
+
+/* Input fail tersembunyi (dikendalikan oleh butang) */
+.fin-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Butang baris muat naik ---------- */
+.fin-reload {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  font-size: 12px;
+  border-radius: 9px;
+  min-height: 34px;
+}
+
+.fin-reload .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.fin-reload:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* Butang ringkas ("Upload fail lain", "Reset ke paparan asal") */
+.fin-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 9px;
+  min-height: 34px;
+  white-space: nowrap;
+}
+
+/* ---------- Zon seret & lepas ---------- */
+.fin-dropzone {  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 24px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 2px dashed #cfe4d8;
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.fin-dropzone.active {
+  border-color: var(--green-600);
+  background: #f2f9f5;
+}
+
+.fin-dropzone-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #eef4ec, #e2eee6);
+  color: var(--green-700);
+}
+
+.fin-dropzone-icon .icon {
+  width: 28px;
+  height: 28px;
+}
+
+.fin-dropzone-body {
+  min-width: 0;
+}
+
+.fin-dropzone-body strong {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+
+.fin-dropzone-body p {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+.fin-dropzone-body em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--green-700);
+}
+
+.fin-dropzone-btn {
+  margin-right: 10px;
+}
+
+.fin-dropzone-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ---------- Tindakan jadual ---------- */
+.fin-table-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid #eef1f2;
+}
+
+.fin-table-actions .fin-reload {
+  margin-left: 0;
+}
+
+.fin-reset-btn {
+  padding: 7px 13px;
+  font-size: 12px;
+  border-radius: 9px;
+}
+
+.fin-alert-actions {
+  margin-top: 9px;
+}
+
+/* ---------- Amaran / ralat ---------- */
+.fin-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 15px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  border: 1px solid;
+}
+
+.fin-alert .icon {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.fin-alert strong {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.fin-alert p {
+  margin: 0;
+}
+
+.fin-alert-hint {
+  margin-top: 4px !important;
+  font-size: 12px;
+  opacity: 0.88;
+}
+
+.fin-alert-body {
+  min-width: 0;
+}
+
+.fin-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 9px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  border-radius: 9px;
+  text-decoration: none;
+}
+
+.fin-login-btn .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.fin-alert.bad {
+  background: #fdecec;
+  border-color: #f2c3c3;
+  color: #8f1d1d;
+}
+
+.fin-alert.warn {
+  background: #fff6e0;
+  border-color: #f0d9a0;
+  color: #7a5200;
+}
+
+.fin-alert.busy {
+  background: #eef4f7;
+  border-color: #d5e2ea;
+  color: #38566b;
+}
+
+/* ============================================================
+   KAD KPI PRESTASI KEWANGAN — MADA PREMIUM FINANCIAL PERFORMANCE
+   ----------------------------------------------------------------
+   Enam kad mendatar: kad putih melengkung dengan ikon dalam
+   bulatan hijau lembut, nilai RM besar, baris penerangan berbut,
+   progress bar peratus sebenar dan aksen lengkung hijau pada
+   penjuru kanan bawah. Kad "Prestasi Perbelanjaan" berlatar
+   kuning keemasan dan merupakan elemen paling menonjol.
+   ============================================================ */
+
+.fin-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+/* ---------- Grid enam kad ---------- */
+.fin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* ---------- Kad ---------- */
+.fin-kpi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 12px 13px 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e8efe9;
+  box-shadow:
+    0 1px 2px rgba(6, 59, 38, 0.04),
+    0 10px 24px rgba(6, 59, 38, 0.08);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Aksen lengkung penjuru kanan bawah (seperti gambar rujukan) */
+.fin-kpi-wedge {
+  position: absolute;
+  right: -26px;
+  bottom: -30px;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: linear-gradient(150deg, #9fd14f 0%, #3a9450 52%, #0b5d3b 100%);
+  opacity: 0.88;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Baris atas: ikon + nama KPI */
+.fin-kpi-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fin-kpi-icon {
+  width: 31px;
+  height: 31px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #eaf4ec;
+  color: #14532d;
+  border: 1px solid rgba(23, 92, 54, 0.09);
+}
+
+.fin-kpi-icon .icon {
+  width: 17px;
+  height: 17px;
+}
+
+.fin-kpi-label {
+  font-size: clamp(9.5px, 0.75vw, 11.5px);
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  line-height: 1.22;
+  color: #1b2a3a;
+  padding-top: 3px;
+  min-width: 0;
+}
+
+/* Nilai RM besar */
+.fin-kpi-value {
+  position: relative;
+  z-index: 1;
+  margin-top: 9px;
+  font-size: clamp(14px, 1.3vw, 19px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: #0f1f33;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Baris penerangan berbut */
+.fin-kpi-status {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 7px;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #2f6b45;
+}
+
+.fin-kpi-status > span:last-child {
+  min-width: 0;
+}
+
+/* Progress bar peratus sebenar */
+.fin-kpi-bar {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 5px;
+  margin-top: 9px;
+  border-radius: 99px;
+  background: #e9efea;
+  overflow: hidden;
+}
+
+.fin-kpi-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #8dc63f, #1e7a3c);
+}
+
+/* ---------- Status amaran / negatif ---------- */
+.fin-kpi[data-status='warn'] .fin-kpi-icon {
+  background: #fff6e0;
+  color: #a06d00;
+  border-color: rgba(240, 217, 160, 0.5);
+}
+
+.fin-kpi[data-status='warn'] .fin-kpi-status {
+  color: #8a5c00;
+}
+
+.fin-kpi[data-status='bad'] .fin-kpi-icon {
+  background: #fdecec;
+  color: #b62d2d;
+  border-color: rgba(242, 195, 195, 0.5);
+}
+
+.fin-kpi[data-status='bad'] .fin-kpi-status {
+  color: #a52121;
+}
+
+/* ---------- Kad HERO: Prestasi Perbelanjaan (kuning keemasan) ---------- */
+.fin-kpi--hero {
+  background: linear-gradient(158deg, #fffbf1 0%, #fdf1d2 58%, #fbe7b7 100%);
+  border-color: rgba(245, 184, 46, 0.55);
+  box-shadow:
+    0 1px 2px rgba(146, 102, 0, 0.08),
+    0 12px 26px rgba(245, 184, 46, 0.24);
+}
+
+.fin-kpi--hero .fin-kpi-icon {
+  background: #fff6dd;
+  color: #b07c05;
+  border-color: rgba(245, 184, 46, 0.45);
+}
+
+.fin-kpi--hero .fin-kpi-label {
+  color: #4a3d18;
+}
+
+.fin-kpi--hero .fin-kpi-value {
+  font-size: clamp(20px, 1.9vw, 27px);
+  letter-spacing: -0.035em;
+  color: #10233a;
+}
+
+.fin-kpi--hero .fin-kpi-status {
+  color: #8a6a12;
+}
+
+.fin-kpi--hero .fin-kpi-wedge {
+  background: linear-gradient(150deg, #ffd98a, #f0b400);
+  opacity: 0.5;
+}
+
+.fin-kpi--hero .fin-kpi-bar {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.fin-kpi--hero .fin-kpi-bar-fill {
+  background: linear-gradient(90deg, #f7c948, #d99a00);
+}
+
+/* ---------- Varian padat (halaman Ringkasan) ---------- */
+.fin-kpi-grid--compact {
+  gap: 8px;
+}
+
+.fin-kpi-grid--compact .fin-kpi {
+  padding: 10px 11px 12px;
+  border-radius: 13px;
+}
+
+.fin-kpi-grid--compact .fin-kpi-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.fin-kpi-grid--compact .fin-kpi-icon .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.fin-kpi-grid--compact .fin-kpi-label {
+  font-size: 9.5px;
+  padding-top: 2px;
+}
+
+.fin-kpi-grid--compact .fin-kpi-value {
+  font-size: clamp(13px, 1.12vw, 16px);
+  margin-top: 7px;
+}
+
+.fin-kpi-grid--compact .fin-kpi-status {
+  font-size: 9.5px;
+  margin-top: 5px;
+}
+
+.fin-kpi-grid--compact .fin-kpi-bar {
+  height: 4px;
+  margin-top: 7px;
+}
+
+.fin-kpi-grid--compact .fin-kpi--hero .fin-kpi-value {
+  font-size: clamp(19px, 1.7vw, 24px);
+}
+
+.fin-kpi-grid--compact .fin-kpi-wedge {
+  right: -22px;
+  bottom: -26px;
+  width: 56px;
+  height: 56px;
+}
+
+/* ============================================================
+   RIBBON TAJUK HIJAU — dikongsi modul Perbelanjaan & Ringkasan
+   ============================================================ */
+.fin-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px -20px;
+  padding: 10px 30px 10px 16px;
+  background: linear-gradient(100deg, #0f4a2c 0%, #1d7a49 100%);
+  color: #ffffff;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
+  filter: drop-shadow(0 8px 14px rgba(14, 68, 41, 0.24));
+  max-width: 100%;
+}
+
+.fin-ribbon-icon {
+  display: inline-flex;
+  color: #f7c948;
+  flex-shrink: 0;
+}
+
+.fin-ribbon-icon .icon {
+  width: 21px;
+  height: 21px;
+}
+
+.fin-ribbon-text {
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+}
+
+/* ============================================================
+   BARIS 3 — CARTA PERBANDINGAN + CARTA KOMPOSISI
+   ============================================================ */
+.fin-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.42fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.fin-chart-card {
+  padding: 16px 20px 16px;
+  overflow: hidden;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fin-chart-card--comp {
+  padding-bottom: 18px;
+}
+
+/* ---------- Carta komposisi ---------- */
+.fin-comp {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 4px 12px;
+  align-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.fin-comp-chart {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  min-width: 0;
+}
+
+.fin-comp-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  text-align: center;
+  pointer-events: none;
+  padding: 0 16%;
+}
+
+.fin-comp-center-icon {
+  display: inline-flex;
+  color: #14532d;
+  margin-bottom: 1px;
+}
+
+.fin-comp-center-icon .icon {
+  width: 26px;
+  height: 26px;
+}
+
+.fin-comp-center-value {
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: #0f1f33;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fin-comp-center-pct {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #1e7a3c;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-comp-center-label {
+  margin-top: 1px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7a6c;
+}
+
+.fin-comp-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  min-width: 0;
+}
+
+.fin-comp-legend li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+
+.fin-comp-legend li.is-neg .fin-comp-legend-rm {
+  color: #b62d2d;
+}
+
+.fin-comp-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+  box-shadow: 0 2px 5px rgba(6, 59, 38, 0.18);
+}
+
+.fin-comp-legend-body {
+  min-width: 0;
+}
+
+.fin-comp-legend-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1b2a3a;
+}
+
+.fin-comp-legend-rm {
+  margin-top: 1px;
+  font-size: 14.5px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: #0f1f33;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fin-comp-legend-pct {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1e7a3c;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-comp-note {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: #6b7a6c;
+  text-align: center;
+}
+
+/* ---------- Carta ---------- */
+.fin-chart-wrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.fin-chart-wrap .recharts-cartesian-axis-tick text {
+  font-family: var(--font);
+}
+
+/* Legenda carta perbandingan — petak bulat seperti gambar rujukan */
+.fin-chart-wrap .recharts-legend-item-text {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.fin-chart-wrap .recharts-legend-item {
+  margin-right: 16px;
+}
+
+/* ---------- Jadual ---------- */
+.fin-table-scroll {
+  max-height: 520px;
+  overflow: auto;
+}
+
+.fin-table {
+  width: 100%;
+  min-width: 1080px;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.fin-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #eef2f7;
+  color: #1c2230;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  padding: 8px 10px;
+  white-space: nowrap;
+  border-bottom: 1px solid #e2e8ee;
+}
+
+.fin-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f3f5;
+  vertical-align: top;
+}
+
+.fin-table tbody tr:hover {
+  background: #f7faf8;
+}
+
+.fin-table .num {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fin-table .num.neg {
+  color: #b62d2d;
+  font-weight: 800;
+}
+
+.fin-prog-name {
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 190px;
+}
+
+.fin-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.fin-flag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.fin-flag.warn {
+  background: #fff6e0;
+  color: #7a5200;
+  border: 1px solid #f0d9a0;
+}
+
+.fin-flag.bad {
+  background: #fdecec;
+  color: #a52121;
+  border: 1px solid #f2c3c3;
+}
+
+.fin-total-row td {
+  position: sticky;
+  bottom: 0;
+  background: #eef4f0;
+  font-weight: 800;
+  color: var(--green-900);
+  border-top: 2px solid #cfe0d6;
+  border-bottom: none;
+}
+
+/* ---------- Responsif ---------- */
+@media (max-width: 1360px) {
+  /* Enam kad masih muat — hanya lajur carta dikecilkan */
+  .fin-charts {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+
+  .fin-comp-chart {
+    height: 232px;
+  }
+}
+
+@media (max-width: 1180px) {
+  /* Carta komposisi turun ke bawah carta perbandingan */
+  .fin-charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fin-comp {
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+    gap: 10px 20px;
+  }
+
+  .fin-comp-chart {
+    height: 282px;
+  }
+
+  /* Legenda mendatar di sebelah kanan donut */
+  .fin-comp-legend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 16px 44px;
+  }
+
+  .fin-comp-legend li {
+    min-width: 150px;
+  }
+}
+
+@media (max-width: 1100px) {
+  /* Enam kad tidak lagi muat pada satu baris — 3 + 3 */
+  .fin-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .fin-head {
+    flex-direction: column;
+  }
+
+  .fin-uploadbar,
+  .fin-uploadbar-main,
+  .fin-uploadbar-side {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .fin-uploadbar-side {
+    margin-top: 2px;
+  }
+
+  .fin-reload {
+    margin-left: 0;
+  }
+
+  .fin-dropzone {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .fin-comp {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .fin-comp-chart {
+    height: 232px;
+    max-width: 260px;
+  }
+
+  .fin-comp-legend {
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .fin-ribbon {
+    margin-left: -20px;
+  }
+}
+
+@media (max-width: 760px) {
+  .fin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fin-kpi-value {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fin-kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .fin-uploadbar-side {
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  /* Baris kawalan ditindan pada telefon: butang utama penuh lebar,
+     butang sampingan dalam grid 2 lajur. */
+  .fin-uploadbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .fin-uploadbar-main {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+
+  .fin-uploadbar-main .fin-upload-btn {
+    justify-content: center;
+  }
+
+  .fin-uploadbar-side {
+    margin-left: 0;
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .fin-uploadbar-side .fin-reload {
+    grid-column: 1 / -1;
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  .fin-uploadbar-side .fin-ghost-btn {
+    justify-content: center;
+  }
+}

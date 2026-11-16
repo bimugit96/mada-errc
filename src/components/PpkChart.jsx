@@ -33,7 +33,7 @@ export default function PpkChart({ config }) {
                 type="number"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: '#5D6D63', fontSize: 12 }}
+                tick={{ fill: '#5D6D63', fontSize: 12, fontWeight: 500 }}
               />
               <YAxis
                 type="category"
@@ -41,7 +41,7 @@ export default function PpkChart({ config }) {
                 width={66}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: '#5D6D63', fontSize: 11.5 }}
+                tick={{ fill: '#5D6D63', fontSize: 11.5, fontWeight: 600 }}
               />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}

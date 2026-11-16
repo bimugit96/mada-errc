@@ -10,15 +10,15 @@
  */
 import {
   formatNumber,
-  formatRM,
   computeKpis,
   computeWilayahStats,
   computeErrcStats,
   computePpkStats,
-  ERRC_COLORS,
   WILAYAH_COLORS,
 } from './stats.js';
-import { ERRC_LIST, computeTotals, normalizeWilayah } from './excelParser.js';
+import { kategoriColor, errcColor } from './categoryColors.js';
+import { PPK_LIST, SAMPLE_SUMMARY } from '../data/sampleData.js';
+import { ERRC_LIST, computeTotals, normalizeWilayah, formatPpkCode } from './excelParser.js';
 
 /* ---------- konstanta paparan ---------- */
 
@@ -41,21 +41,8 @@ const KATEGORI_ORDER = [
 
 const KUMPULAN_ORDER = ['IAT', 'AT', 'PEMASARAN'];
 
-/** 12 warna kategori: IAT (hijau), AT (biru), PEMASARAN (emas). */
-const KATEGORI_COLORS = [
-  '#0B5D3B',
-  '#12784B',
-  '#1A8F59',
-  '#2FA36E',
-  '#5CB87F',
-  '#1F4E79',
-  '#2A5D8F',
-  '#386FA6',
-  '#4F85B5',
-  '#6B9DC5',
-  '#8FB4D4',
-  '#E8A020',
-];
+/* Palet warna kategori dipindahkan ke src/utils/categoryColors.js —
+   diuruskan berdasarkan NAMA kategori (bukan kedudukan senarai). */
 
 /* ---------- utiliti ---------- */
 
@@ -97,7 +84,7 @@ const BAR_UBLPU_PP = [
 ];
 
 /* ============================================================
- *  MODE DATA CONTOH (Fasa 1 — dikekalkan tanpa perubahan nilai)
+ *  MODE DATA CONTOH — paparan rujukan penuh dashboard MADA
  * ============================================================ */
 
 export function buildSampleViewModel(records) {
@@ -106,29 +93,7 @@ export function buildSampleViewModel(records) {
   const errc = computeErrcStats(records);
   const ppk = computePpkStats(records);
 
-  const kpis = [
-    {
-      id: 'jumlah',
-      label: 'Jumlah Usahawan Baharu',
-      value: formatNumber(k.totalUsahawan),
-      sub: 'Rekod usahawan yang didaftarkan',
-      variant: '',
-    },
-    {
-      id: 'pemutihan',
-      label: 'Usahawan Telah Melalui Pemutihan',
-      value: formatNumber(k.totalPemutihan),
-      sub: `Daripada ${formatNumber(k.totalUsahawan)} usahawan baharu`,
-      variant: 'gold',
-    },
-    {
-      id: 'ppk',
-      label: 'PPK Aktif',
-      value: `${k.ppkAktif}`,
-      sub: 'Daripada 27 PPK · 4 Wilayah',
-      variant: 'gold',
-    },
-  ];
+  const kpis = SAMPLE_SUMMARY.kpis;
 
   const charts = {
     wilayah: {
@@ -143,8 +108,11 @@ export function buildSampleViewModel(records) {
     donut: {
       title: 'Kesebaran ERRC 01 – ERRC 07',
       sub: 'Peratusan jumlah usahawan baharu mengikut kategori ERRC',
-      data: errc.map((e) => ({ name: e.name, value: e.value })),
-      colors: ERRC_COLORS,
+      data: errc.map((e) => ({
+        name: e.name,
+        value: e.value,
+        color: errcColor(e.name),
+      })),
       centerValue: formatNumber(k.totalUsahawan),
       centerLabel: 'Jumlah',
     },
@@ -172,9 +140,9 @@ export function buildSampleViewModel(records) {
       xInterval: 0,
     },
     ppk: {
-      title: 'Analisis Mengikut 27 PPK',
-      sub: 'Jumlah usahawan baharu setiap PPK — warna bar mengikut wilayah PPK berkenaan',
-      data: ppk.map((p) => ({ name: p.name, wilayah: p.wilayah, value: p.total })),
+      title: 'Taburan Usahawan Mengikut PPK',
+      sub: 'Jumlah usahawan setiap PPK',
+      data: PPK_LIST.map((p) => ({ name: p.kod, wilayah: p.wilayah, value: p.total })),
       valueName: 'Jumlah Usahawan',
     },
   };
@@ -185,58 +153,33 @@ export function buildSampleViewModel(records) {
       { key: 'nama', label: 'Nama Usahawan' },
       { key: 'ppk', label: 'PPK' },
       { key: 'wilayah', label: 'Wilayah' },
+      { key: 'kategori', label: 'Kategori' },
       { key: 'errc', label: 'ERRC' },
-      { key: 'tarikh', label: 'Tarikh' },
+      { key: 'tarikhLulus', label: 'Tarikh Lulus' },
       { key: 'statusPemutihan', label: 'Status Pemutihan' },
     ],
     rows: records,
     filters: [
       { key: 'wilayah', label: 'Wilayah' },
+      { key: 'kategori', label: 'Kategori' },
       { key: 'errc', label: 'ERRC' },
       { key: 'statusPemutihan', label: 'Status' },
     ],
-    searchFields: ['nama', 'ppk', 'id'],
-    searchPlaceholder: 'Cari nama usahawan, PPK atau ID…',
+    searchFields: ['nama', 'ppk', 'kategori', 'id'],
+    searchPlaceholder: 'Cari nama usahawan, PPK, kategori atau ID…',
     downloadName: 'mada-errc-data-contoh.csv',
     defaultSort: { kunci: 'id', arah: 1 },
   };
 
-  /* ---------- Sorotan (dijana daripada data sebenar) ---------- */
-  const topWilayah = [...wilayah].sort((a, b) => b.total - a.total)[0];
-  const topPpk = [...ppk].sort((a, b) => b.total - a.total)[0];
-
-  const highlights = [
-    {
-      icon: '👥',
-      label: 'Jumlah Usahawan Baharu',
-      value: formatNumber(k.totalUsahawan),
-      note: 'Rekod usahawan yang didaftarkan',
+  const overview = {
+    wilayah: {
+      items: SAMPLE_SUMMARY.wilayahDistribution,
+      centerLabel: 'Usahawan',
+      unit: 'usahawan',
     },
-    {
-      icon: '🗺️',
-      label: 'Wilayah Pencapaian Tertinggi',
-      value: topWilayah.name,
-      note: `${formatNumber(topWilayah.total)} usahawan baharu`,
-    },
-    {
-      icon: '🏆',
-      label: 'PPK Pencapaian Tertinggi',
-      value: topPpk.name,
-      note: `${formatNumber(topPpk.total)} usahawan baharu`,
-    },
-    {
-      icon: '🌾',
-      label: 'Usahawan Telah Melalui Pemutihan',
-      value: formatNumber(k.totalPemutihan),
-      note: `Daripada ${formatNumber(k.totalUsahawan)} usahawan baharu`,
-    },
-    {
-      icon: '📊',
-      label: 'PPK Aktif',
-      value: `${k.ppkAktif}`,
-      note: 'Daripada 27 PPK · 4 Wilayah',
-    },
-  ];
+    achievement: SAMPLE_SUMMARY.achievement,
+    trend: SAMPLE_SUMMARY.trend,
+  };
 
   return {
     mode: 'contoh',
@@ -248,14 +191,15 @@ export function buildSampleViewModel(records) {
       rowCount: records.length,
       yearLabel: '2026',
       importedAt: null,
+      dataDateLabel: SAMPLE_SUMMARY.dataDateLabel,
     },
     kpis,
     charts,
     table,
-    sales: null,
-    highlights,
+    sales: SAMPLE_SUMMARY.sales,
+    overview,
     ppkExplorer: {
-      data: ppk.map((p) => ({ name: p.name, wilayah: p.wilayah, value: p.total })),
+      data: PPK_LIST.map((p) => ({ name: p.kod, wilayah: p.wilayah, value: p.total })),
     },
   };
 }
@@ -269,8 +213,12 @@ export function buildSampleViewModel(records) {
  * ============================================================ */
 
 export function buildExcelViewModel(dataset) {
-  // Normalisasi paparan wilayah ("I" → "Wilayah I")
-  const rows = dataset.rows.map((r) => ({ ...r, wilayah: normalizeWilayah(r.wilayah) }));
+  // Normalisasi paparan wilayah ("I" → "Wilayah I") dan kod PPK ("A" + "I" → "A-I")
+  const rows = dataset.rows.map((r) => ({
+    ...r,
+    wilayah: normalizeWilayah(r.wilayah),
+    ppk: formatPpkCode(r.ppk, r.wilayah),
+  }));
   const totals = computeTotals(rows);
 
   /* ---------- agregasi (satu pusingan sahaja) ---------- */
@@ -296,7 +244,7 @@ export function buildExcelViewModel(dataset) {
 
     const pkKey = `${r.wilayah}|${r.ppk}`;
     g = getOrCreate(perPpk, pkKey, () => ({
-      name: `PPK ${r.ppk}`,
+      name: r.ppk,
       wilayah: r.wilayah,
       kumulatif: 0,
       ub: 0,
@@ -371,6 +319,7 @@ export function buildExcelViewModel(dataset) {
       value: formatNumber(totals.kumulatif),
       sub: 'Data kini selepas ERRC 01–07',
       variant: '',
+      icon: 'users',
     },
     {
       id: 'ub',
@@ -378,6 +327,7 @@ export function buildExcelViewModel(dataset) {
       value: formatNumber(totals.ub),
       sub: 'Jumlah UB, ERRC 01–07',
       variant: 'gold',
+      icon: 'userPlus',
     },
     {
       id: 'pu',
@@ -385,6 +335,7 @@ export function buildExcelViewModel(dataset) {
       value: formatNumber(totals.pu),
       sub: 'Jumlah PU, ERRC 01–07',
       variant: '',
+      icon: 'doc',
     },
     {
       id: 'pp',
@@ -392,6 +343,7 @@ export function buildExcelViewModel(dataset) {
       value: formatNumber(totals.pp),
       sub: 'Jumlah PP, ERRC 01–07',
       variant: 'gold',
+      icon: 'swap',
     },
   ];
 
@@ -409,9 +361,14 @@ export function buildExcelViewModel(dataset) {
     },
     donut: {
       title: 'Kesebaran Kumulatif Mengikut Kategori',
-      sub: '12 kategori — kumpulan IAT, AT dan Pemasaran',
-      data: kategoriStats.map((k) => ({ name: k.name, value: k.kumulatif })),
-      colors: KATEGORI_COLORS,
+      sub: '12 kategori - kumpulan IAT, AT dan Pemasaran',
+      data: kategoriStats.map((k) => ({
+        name: k.name,
+        value: k.kumulatif,
+        /* Warna mengikut NAMA kategori — kekal konsisten walaupun
+           fail Excel baharu mengubah susunan atau bilangan kategori. */
+        color: kategoriColor(k.name),
+      })),
       centerValue: formatNumber(totals.kumulatif),
       centerLabel: 'Kumulatif',
     },
@@ -462,63 +419,26 @@ export function buildExcelViewModel(dataset) {
     defaultSort: { kunci: 'wilayah', arah: 1 },
   };
 
-  /* ---------- Sorotan (dijana daripada data sebenar) ---------- */
-  const topWilayah = [...wilayahStats].sort((a, b) => b.kumulatif - a.kumulatif)[0];
-  const topPpk = [...ppkStats].sort((a, b) => b.kumulatif - a.kumulatif)[0];
-  const topKategori = [...kategoriStats].sort((a, b) => b.kumulatif - a.kumulatif)[0];
-
-  const highlights = [
-    {
-      icon: '👥',
-      label: 'Jumlah Usahawan (Kumulatif)',
-      value: formatNumber(totals.kumulatif),
-      note: 'Data kini selepas ERRC 01–07',
+  /* ---------- Data paparan Ringkasan ---------- */
+  const overview = {
+    wilayah: {
+      items: wilayahStats.map((w) => ({ name: w.name, value: w.kumulatif })),
+      centerLabel: 'Usahawan',
+      unit: 'usahawan',
     },
-    {
-      icon: '🗺️',
-      label: 'Wilayah Pencapaian Tertinggi',
-      value: topWilayah.name,
-      note: `${formatNumber(topWilayah.kumulatif)} usahawan kumulatif`,
+    achievement: {
+      title: 'Pencapaian Bilangan Usahawan Mengikut Wilayah',
+      seriesA: { name: 'Baseline', color: '#9AA3C7' },
+      seriesB: { name: 'Kumulatif', color: '#FBBF24' },
+      data: wilayahStats.map((w) => ({
+        name: w.name,
+        a: w.baseline,
+        b: w.kumulatif,
+        pct: w.baseline > 0 ? (w.kumulatif / w.baseline) * 100 : null,
+      })),
+      note: '% = Kumulatif ÷ Baseline',
     },
-    {
-      icon: '🏆',
-      label: 'PPK Pencapaian Tertinggi',
-      value: topPpk.name,
-      note: `${formatNumber(topPpk.kumulatif)} usahawan kumulatif`,
-    },
-    {
-      icon: '📦',
-      label: 'Kategori Pencapaian Tertinggi',
-      value: topKategori.name,
-      note: `${formatNumber(topKategori.kumulatif)} usahawan kumulatif`,
-    },
-    {
-      icon: '🌱',
-      label: 'Usahawan Baharu (UB)',
-      value: formatNumber(totals.ub),
-      note: 'Jumlah UB, ERRC 01–07',
-    },
-    {
-      icon: '🍃',
-      label: 'Pemutihan (PU)',
-      value: formatNumber(totals.pu),
-      note: 'Jumlah PU, ERRC 01–07',
-    },
-  ];
-
-  if (dataset.sales) {
-    const teratas = [
-      ['IAT', dataset.sales.iat],
-      ['AT', dataset.sales.at],
-      ['Pemasaran', dataset.sales.pemasaran],
-    ].sort((a, b) => b[1] - a[1])[0];
-    highlights.push({
-      icon: '💰',
-      label: 'Nilai Jualan Kategori Tertinggi',
-      value: teratas[0],
-      note: `${formatRM(teratas[1])} · ${((teratas[1] / dataset.sales.total) * 100).toFixed(1)}% daripada jumlah nilai jualan`,
-    });
-  }
+  };
 
   return {
     mode: 'excel',
@@ -535,7 +455,7 @@ export function buildExcelViewModel(dataset) {
     charts,
     table,
     sales: dataset.sales || null,
-    highlights,
+    overview,
     ppkExplorer: {
       data: ppkStats.map((p) => ({
         name: p.name,

@@ -5,11 +5,16 @@
   "type": "module",
   "description": "Dashboard interaktif pemantauan pencapaian ERRC 2026 bagi MADA (menggunakan data contoh).",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server/index.js",
+    "template": "node scripts/make-template.mjs",
+    "test": "node --test src/utils/sheetParser.test.js src/utils/sheetParser.real.test.js src/utils/perbelanjaanExcel.test.js src/utils/excelParser.sales.test.js"
   },
   "dependencies": {
+    "express": "^5.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.15.3",

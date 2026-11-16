@@ -88,6 +88,26 @@ export function normalizeWilayah(raw) {
   return String(raw).trim();
 }
 
+/**
+ * Normalisasi kod PPK mengikut gabungan PPK + Wilayah:
+ * cth: ppk="A", wilayah="I" (atau "Wilayah I") → "A-I"
+ *      ppk="G", wilayah="IV" (atau "Wilayah IV") → "G-IV"
+ */
+export function formatPpkCode(ppkRaw, wilayahRaw) {
+  const p = String(ppkRaw ?? '')
+    .trim()
+    .replace(/^PPK\s+/i, '')
+    .toUpperCase();
+  const w = String(wilayahRaw ?? '')
+    .trim()
+    .replace(/^WILAYAH\s+/i, '')
+    .toUpperCase();
+  if (!p) return '';
+  if (p.includes('-')) return p;
+  if (['I', 'II', 'III', 'IV'].includes(w)) return `${p}-${w}`;
+  return p;
+}
+
 /* ---------- pembacaan fail ---------- */
 
 export function openWorkbook(arrayBuffer) {
@@ -483,6 +503,26 @@ export function extractSalesValues(wb) {
   }
   if (headerRow < 0) return null;
 
+  /*
+   * Cari lajur wilayah. Worksheet "NILAI JUALAN" menggunakan baris
+   * tajuk "SEKTOR | SUBSEKTOR | WILAYAH | ... | JUMLAH (RM)" dan
+   * baris sub-tajuk di bawahnya yang memuat "WILAYAH I".."WILAYAH IV".
+   */
+  const WILAYAH_IDS = ['I', 'II', 'III', 'IV'];
+  const wilayahCols = {};
+  for (let r = headerRow; r < Math.min(matrix.length, headerRow + 3); r += 1) {
+    const row = matrix[r] || [];
+    for (let c = 0; c < row.length; c += 1) {
+      const n = normalizeHeader(cellText(row[c]));
+      const m = /^WILAYAH (I|II|III|IV)$/i.exec(n);
+      if (m && wilayahCols[m[1].toUpperCase()] === undefined) {
+        wilayahCols[m[1].toUpperCase()] = c;
+      }
+    }
+    if (Object.keys(wilayahCols).length === WILAYAH_IDS.length) break;
+  }
+  const hasWilayahCols = Object.keys(wilayahCols).length > 0;
+
   // Cari lajur "JUMLAH (RM)" (nilai jualan keseluruhan setiap baris)
   const headerNorm = (matrix[headerRow] || []).map(normalizeHeader);
   let totalCol = headerNorm.findIndex((h) => h === 'JUMLAH RM' || h === 'JUMLAH');
@@ -513,6 +553,22 @@ export function extractSalesValues(wb) {
     AT: { sum: 0, rows: 0, printed: null },
     PEMASARAN: { sum: 0, rows: 0, printed: null },
   };
+  // Kumpulan nilai setiap sektor mengikut wilayah (dikira daripada
+  // baris subsektor sahaja — baris subtotal TIDAK ditambah supaya
+  // tiada pengiraan berganda).
+  const sectorWilayah = {
+    IAT: {},
+    AT: {},
+    PEMASARAN: {},
+  };
+  // Nilai CETAKAN mengikut wilayah (baris subtotal sektor & baris
+  // JUMLAH KESELURUHAN) — digunakan untuk semakan rentals sahaja.
+  const printedSectorWilayah = {
+    IAT: {},
+    AT: {},
+    PEMASARAN: {},
+  };
+  const printedGrandWilayah = {};
   let currentSector = null;
   let printedGrandTotal = null;
   let yearLabel = null;
@@ -540,6 +596,14 @@ export function extractSalesValues(wb) {
     if (aNorm.startsWith('JUMLAH KESELURUHAN')) {
       const v = toNumber(row[totalCol]);
       if (Number.isFinite(v)) printedGrandTotal = v;
+      if (hasWilayahCols) {
+        for (const id of WILAYAH_IDS) {
+          const c = wilayahCols[id];
+          if (c === undefined) continue;
+          const wv = toNumber(row[c]);
+          if (Number.isFinite(wv)) printedGrandWilayah[id] = wv;
+        }
+      }
       continue;
     }
 
@@ -551,6 +615,14 @@ export function extractSalesValues(wb) {
       if (currentSector) {
         const v = toNumber(row[totalCol]);
         if (Number.isFinite(v)) sectors[currentSector].printed = v;
+        if (hasWilayahCols) {
+          for (const id of WILAYAH_IDS) {
+            const c = wilayahCols[id];
+            if (c === undefined) continue;
+            const wv = toNumber(row[c]);
+            if (Number.isFinite(wv)) printedSectorWilayah[currentSector][id] = wv;
+          }
+        }
       }
       continue;
     }
@@ -561,6 +633,19 @@ export function extractSalesValues(wb) {
     if (Number.isFinite(v)) {
       sectors[currentSector].sum += v;
       sectors[currentSector].rows++;
+    }
+    // Nilai mengikut wilayah — hanya baris data subsektor supaya
+    // baris subtotal tidak dikira dua kali.
+    if (hasWilayahCols) {
+      for (const id of WILAYAH_IDS) {
+        const c = wilayahCols[id];
+        if (c === undefined) continue;
+        const wv = toNumber(row[c]);
+        if (Number.isFinite(wv)) {
+          sectorWilayah[currentSector][id] =
+            (sectorWilayah[currentSector][id] || 0) + wv;
+        }
+      }
     }
   }
 
@@ -579,6 +664,50 @@ export function extractSalesValues(wb) {
   const check = (printed, computed) =>
     printed === null ? null : Math.abs(printed - computed) <= 0.01;
 
+  /*
+   * Nilai jualan mengikut wilayah.
+   *
+   * Jumlah setiap wilayah dikira dengan kaedah yang SAMA seperti
+   * jumlah keseluruhan: IAT + AT + PEMASARAN. Baris subtotal sektor
+   * TIDAK ditambah (hanya baris subsektor), jadi tiada pengiraan
+   * berganda. Nilai cetakan baris "JUMLAH KESELURUHAN (RM)" digunakan
+   * untuk semakan rentals sahaja.
+   */
+  let wilayah = null;
+  if (hasWilayahCols) {
+    const rows = [];
+    for (const id of WILAYAH_IDS) {
+      const c = wilayahCols[id];
+      if (c === undefined) continue;
+      const wIat = sectorWilayah.IAT[id] || 0;
+      const wAt = sectorWilayah.AT[id] || 0;
+      const wPemasaran = sectorWilayah.PEMASARAN[id] || 0;
+      const wTotal = wIat + wAt + wPemasaran;
+      rows.push({
+        id,
+        name: `Wilayah ${id}`,
+        iat: wIat,
+        at: wAt,
+        pemasaran: wPemasaran,
+        total: wTotal,
+        printed: printedGrandWilayah[id] ?? null,
+        hasData: wTotal > 0,
+      });
+    }
+    const withData = rows.filter((w) => w.hasData);
+    if (withData.length > 0) {
+      const sum = withData.reduce((acc, w) => acc + w.total, 0);
+      wilayah = {
+        rows: withData,
+        total: sum,
+        // Semakan: jumlah wilayah mesti sama dengan jumlah keseluruhan.
+        matchesTotal: Math.abs(sum - total) <= 0.01,
+        hasCategoryBreakdown:
+          withData.some((w) => w.iat > 0 || w.at > 0 || w.pemasaran > 0),
+      };
+    }
+  }
+
   return {
     sheetName,
     yearLabel,
@@ -586,6 +715,7 @@ export function extractSalesValues(wb) {
     iat,
     at,
     pemasaran,
+    wilayah,
     counts: {
       IAT: sectors.IAT.rows,
       AT: sectors.AT.rows,
