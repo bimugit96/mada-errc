@@ -1,0 +1,18 @@
+// vite.config.js
+import { defineConfig } from "file:///Users/hassan/Documents/GitHub/mada-errc/node_modules/vite/dist/node/index.js";
+import react from "file:///Users/hassan/Documents/GitHub/mada-errc/node_modules/@vitejs/plugin-react/dist/index.js";
+var vite_config_default = defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      "/api/admin": `http://127.0.0.1:${process.env.PORT || process.env.API_PORT || 8787}`
+    },
+    port: 5173,
+    host: true
+    // Boleh dibuka melalui alamat LAN (sesuai untuk pembentangan).
+  }
+});
+export {
+  vite_config_default as default
+};
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidml0ZS5jb25maWcuanMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbImNvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9kaXJuYW1lID0gXCIvVXNlcnMvaGFzc2FuL0RvY3VtZW50cy9HaXRIdWIvbWFkYS1lcnJjXCI7Y29uc3QgX192aXRlX2luamVjdGVkX29yaWdpbmFsX2ZpbGVuYW1lID0gXCIvVXNlcnMvaGFzc2FuL0RvY3VtZW50cy9HaXRIdWIvbWFkYS1lcnJjL3ZpdGUuY29uZmlnLmpzXCI7Y29uc3QgX192aXRlX2luamVjdGVkX29yaWdpbmFsX2ltcG9ydF9tZXRhX3VybCA9IFwiZmlsZTovLy9Vc2Vycy9oYXNzYW4vRG9jdW1lbnRzL0dpdEh1Yi9tYWRhLWVycmMvdml0ZS5jb25maWcuanNcIjtpbXBvcnQgeyBkZWZpbmVDb25maWcgfSBmcm9tICd2aXRlJztcbmltcG9ydCByZWFjdCBmcm9tICdAdml0ZWpzL3BsdWdpbi1yZWFjdCc7XG5cbmV4cG9ydCBkZWZhdWx0IGRlZmluZUNvbmZpZyh7XG4gIHBsdWdpbnM6IFtyZWFjdCgpXSxcbiAgc2VydmVyOiB7XG4gICAgcHJveHk6IHtcbiAgICAgICcvYXBpL2FkbWluJzogYGh0dHA6Ly8xMjcuMC4wLjE6JHtwcm9jZXNzLmVudi5QT1JUIHx8IHByb2Nlc3MuZW52LkFQSV9QT1JUIHx8IDg3ODd9YCxcbiAgICB9LFxuICAgIHBvcnQ6IDUxNzMsXG4gICAgaG9zdDogdHJ1ZSwgLy8gQm9sZWggZGlidWthIG1lbGFsdWkgYWxhbWF0IExBTiAoc2VzdWFpIHVudHVrIHBlbWJlbnRhbmdhbikuXG4gIH0sXG59KTtcbiJdLAogICJtYXBwaW5ncyI6ICI7QUFBMFMsU0FBUyxvQkFBb0I7QUFDdlUsT0FBTyxXQUFXO0FBRWxCLElBQU8sc0JBQVEsYUFBYTtBQUFBLEVBQzFCLFNBQVMsQ0FBQyxNQUFNLENBQUM7QUFBQSxFQUNqQixRQUFRO0FBQUEsSUFDTixPQUFPO0FBQUEsTUFDTCxjQUFjLG9CQUFvQixRQUFRLElBQUksUUFBUSxRQUFRLElBQUksWUFBWSxJQUFJO0FBQUEsSUFDcEY7QUFBQSxJQUNBLE1BQU07QUFBQSxJQUNOLE1BQU07QUFBQTtBQUFBLEVBQ1I7QUFDRixDQUFDOyIsCiAgIm5hbWVzIjogW10KfQo=

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -14,14 +14,13 @@ import Icon from './Icons.jsx';
 import FinRibbon from './FinRibbon.jsx';
 import FinCompositionDonut from './FinCompositionDonut.jsx';
 import PerbelanjaanKpiRow from './PerbelanjaanKpiRow.jsx';
-import { STATUS } from '../hooks/usePerbelanjaanExcel.js';
 import {
   formatRM,
   formatPercent,
   formatCompactRM,
   formatRMShort,
 } from '../utils/perbelanjaan.js';
-import { downloadCsv, FILE_ACCEPT } from '../utils/perbelanjaanExcel.js';
+import { downloadCsv } from '../utils/perbelanjaanExcel.js';
 
 /* ------------------------------------------------------------------
  *  WARNA SERI CARTA PERBANDINGAN
@@ -56,129 +55,10 @@ function BarValueLabel(props) {
   );
 }
 
-/* ------------------------------------------------------------------
- *  BARIS MUAT NAIK EXCEL
- *
- *  Baris ini hanya memaparkan kawalan: muat naik / muat turun /
- *  import. Semua butiran teknikal fail (nama fail, helaian, tarikh
- *  muat naik, nota sumber) sengaja tidak dipaparkan.
- * ------------------------------------------------------------------ */
-function UploadBar({
-  status,
-  hasFile,
-  onPick,
-  onDownload,
-  canDownload,
-  onImportExcel,
-  onResetExcel,
-}) {
-  const isReading = status === STATUS.READING;
-
-  return (
-    <div className="fin-uploadbar">
-      <div className="fin-uploadbar-main">
-        <button
-          type="button"
-          className="btn btn-primary fin-upload-btn"
-          onClick={onPick}
-          disabled={isReading}
-        >
-          <Icon name="upload" strokeWidth={2.2} />
-          {isReading
-            ? 'Membaca fail...'
-            : hasFile
-              ? 'MUAT NAIK FAIL BAHARU'
-              : 'MUAT NAIK EXCEL'}
-        </button>
-
-        {!hasFile ? (
-          <span className="fin-upload-hint">
-            Fail Excel (.xlsx / .xls) yang mengandungi data perbelanjaan
-          </span>
-        ) : null}
-      </div>
-
-      <div className="fin-uploadbar-side">
-        <button
-          type="button"
-          className="btn btn-secondary fin-reload"
-          onClick={onDownload}
-          disabled={!canDownload}
-        >
-          <Icon name="docOutline" strokeWidth={2.2} />
-          MUAT TURUN DATA
-        </button>
-
-        <button
-          type="button"
-          className="btn btn-ghost fin-ghost-btn"
-          onClick={onImportExcel}
-        >
-          Upload fail lain
-        </button>
-
-        <button
-          type="button"
-          className="btn btn-ghost fin-ghost-btn"
-          onClick={onResetExcel}
-        >
-          Reset ke paparan asal
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------
- *  PAGARAN UTAMA
- *
- *  State muat naik fail diuruskan oleh hook `usePerbelanjaanExcel`
- *  pada peringkat App (lihat App.jsx) supaya data kekal apabila
- *  pengguna bertukar modul.
- *
- *  Susun atur:
- *    BARIS 1 — Tajuk + baris kawalan muat naik / muat turun
- *    BARIS 2 — Enam kad KPI prestasi kewangan
- *    BARIS 3 — Carta perbandingan program (kiri) + komposisi (kanan)
- *    (jadual terperinci dikekalkan di bawah)
- * ------------------------------------------------------------------ */
-export default function PerbelanjaanDashboard({
-  status,
-  model,
-  error,
-  onFile,
-  onReset,
-  onImportExcel,
-  onResetExcel,
-}) {
-  const fileInputRef = useRef(null);
-  const [dragActive, setDragActive] = useState(false);
-
+export default function PerbelanjaanDashboard({ loading, model, error }) {
   const totals = model?.totals || null;
   const programs = model?.programs || [];
   const hasData = Boolean(model && totals);
-
-  /* --- buka pemilih fail --- */
-  function openFilePicker() {
-    fileInputRef.current?.click();
-  }
-
-  /* --- fail dipilih melalui pemilih --- */
-  function onFileChange(e) {
-    const file = e.target.files && e.target.files[0];
-    // Kosongkan nilai supaya pilihan fail sama boleh dipilih semula.
-    e.target.value = '';
-    if (file) onFile(file);
-  }
-
-  /* --- seret & lepas --- */
-  function onDrop(e) {
-    e.preventDefault();
-    setDragActive(false);
-    const file = e.dataTransfer?.files && e.dataTransfer.files[0];
-    if (!file) return;
-    onFile(file);
-  }
 
   /* --- muat turun CSV --- */
   function onDownload() {
@@ -218,97 +98,21 @@ export default function PerbelanjaanDashboard({
           <h2>PRESTASI KEWANGAN PERUNTUKAN PEMBANGUNAN USAHAWAN</h2>
         </div>
 
-        <UploadBar
-          status={status}
-          hasFile={hasData}
-          onPick={openFilePicker}
-          onDownload={onDownload}
-          canDownload={hasData}
-          onImportExcel={onImportExcel}
-          onResetExcel={onResetExcel}
-        />
       </div>
 
-      {/* ---------- INPUT FAIL (tersembunyi) ---------- */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={FILE_ACCEPT}
-        className="fin-file-input"
-        onChange={onFileChange}
-        aria-hidden="true"
-        tabIndex={-1}
-      />
-
-      {/* ---------- RALAT PEMBACAAN FAIL ---------- */}
-      {error ? (
+      {error && (
         <div className="fin-alert bad" role="alert">
-          <Icon name="upload" />
-          <div className="fin-alert-body">
-            <strong>Fail tidak dapat diproses</strong>
-            <p>{error.message}</p>
-            {error.hint ? <p className="fin-alert-hint">{error.hint}</p> : null}
-            <div className="fin-alert-actions">
-              <button
-                type="button"
-                className="btn btn-primary fin-login-btn"
-                onClick={openFilePicker}
-              >
-                <Icon name="upload" strokeWidth={2.2} />
-                Cuba fail lain
-              </button>
-            </div>
-          </div>
+          <div className="fin-alert-body"><p>{error}</p></div>
         </div>
-      ) : null}
-
-      {/* ---------- MEMBACA FAIL ---------- */}
-      {status === STATUS.READING ? (
+      )}
+      {loading && (
         <div className="fin-alert busy" role="status">
-          <Icon name="upload" />
-          <div className="fin-alert-body">
-            <strong>Membaca fail Excel...</strong>
-            <p>Helaian yang mengandungi data perbelanjaan sedang dikesan.</p>
-          </div>
+          <div className="fin-alert-body"><p>Memuatkan data JTPPM…</p></div>
         </div>
-      ) : null}
-
-      {/* ---------- TIADA FAIL: ARAHAN MUAT NAIK ---------- */}
-      {!hasData && status !== STATUS.READING && !error ? (
-        <div
-          className={`fin-dropzone ${dragActive ? 'active' : ''}`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragActive(true);
-          }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={onDrop}
-        >
-          <span className="fin-dropzone-icon">
-            <Icon name="upload" strokeWidth={1.8} />
-          </span>
-          <div className="fin-dropzone-body">
-            <strong>Belum ada data perbelanjaan dimuat naik</strong>
-            <p>
-              Muat naik fail Excel (.xlsx / .xls) yang mengandungi baris tajuk
-              <em> Program</em> dan <em>Peruntukan</em>. Helaian data akan dikesan
-              secara automatik, dan semua KPI, carta serta jadual dikira daripada
-              fail yang dimuat naik.
-            </p>
-            <button
-              type="button"
-              className="btn btn-primary fin-upload-btn fin-dropzone-btn"
-              onClick={openFilePicker}
-            >
-              <Icon name="upload" strokeWidth={2.2} />
-              MUAT NAIK EXCEL
-            </button>
-            <span className="fin-dropzone-hint">
-              Anda juga boleh seret dan lepas fail ke kawasan ini.
-            </span>
-          </div>
-        </div>
-      ) : null}
+      )}
+      {!hasData && !loading && !error && (
+        <p className="exec-fin-hint">Tiada data JTPPM tersedia.</p>
+      )}
 
       {/* ---------- BARIS 2 : ENAM KAD KPI ---------- */}
       {hasData ? <PerbelanjaanKpiRow model={model} /> : null}
@@ -504,13 +308,7 @@ export default function PerbelanjaanDashboard({
               <Icon name="docOutline" strokeWidth={2.2} />
               MUAT TURUN DATA (CSV)
             </button>
-            <button
-              type="button"
-              className="btn btn-ghost fin-reset-btn"
-              onClick={onReset}
-            >
-              Buang data
-            </button>
+
           </div>
         </div>
       ) : null}

@@ -11,9 +11,9 @@ const CATEGORIES = [
 /**
  * Header utama — latar gambar landskap agromakanan yang
  * pudar ke putih di sebelah kiri, tajuk besar, moto (pill emas),
- * kategori (IAT, AT, Pemasaran) dan butang Muat Naik Excel.
+ * kategori (IAT, AT, Pemasaran) dan menu navigasi.
  */
-export function Header({ onImport, onToggleSidebar }) {
+export function Header({ onToggleSidebar }) {
   return (
     <header className="app-header">
       <div className="header-bg" aria-hidden="true" />
@@ -48,10 +48,7 @@ export function Header({ onImport, onToggleSidebar }) {
           >
             <Icon name="menu" strokeWidth={2} />
           </button>
-          <button type="button" className="btn btn-upload" onClick={onImport}>
-            <Icon name="upload" strokeWidth={2.2} />
-            Muat Naik Excel
-          </button>
+
         </div>
 
         <div className="header-slogan" aria-hidden="true">
@@ -78,7 +75,7 @@ export function Header({ onImport, onToggleSidebar }) {
   );
 }
 
-export function DataBanner({ mode, meta, onImport, onReset }) {
+export function DataBanner({ mode, meta }) {
   if (mode !== 'excel') {
     return null;
   }
@@ -102,14 +99,7 @@ export function DataBanner({ mode, meta, onImport, onReset }) {
           {meta.yearLabel ? ` · ERRC ${meta.yearLabel}` : ''}
           {masa ? ` · Dimuat: ${masa}` : ''}
         </span>
-        <span className="banner-actions">
-          <button className="btn-ghost" onClick={onImport}>
-            Upload fail lain
-          </button>
-          <button className="btn-ghost" onClick={onReset}>
-            Reset ke paparan asal
-          </button>
-        </span>
+
       </div>
     </div>
   );

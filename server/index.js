@@ -1,15 +1,5 @@
-/**
- * ============================================================
- *  PELAYAN STATIK — MADA ERRC DASHBOARD (mod produksi)
- * ============================================================
- *  Modul Perbelanjaan kini menggunakan kaedah MUAT NAIK EXCEL:
- *  fail dibaca sepenuhnya di dalam pelayar. Tiada API, tiada
- *  sambungan luar, tiada rahsia pada pelayan.
- *
- *  Pelayan ini hanya menyajikan hasil bina `dist/` sebagai SPA.
- *  Untuk pembangunan, gunakan `npm run dev` (Vite dev server).
- * ============================================================
- */
+import { createDashboardRouter } from './dashboard.js';
+import { createAdminRouter } from './admin.js';
 import express from 'express';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -24,6 +14,9 @@ const staticDir = path.resolve(root, process.env.SERVE_STATIC_DIR || 'dist');
 
 const app = express();
 app.disable('x-powered-by');
+const uploadDirectory = path.resolve(root, process.env.ADMIN_UPLOAD_DIR || 'data/admin-uploads');
+app.use('/api/admin', createAdminRouter(uploadDirectory));
+app.use('/api/dashboard', createDashboardRouter(uploadDirectory));
 
 if (!fs.existsSync(staticDir)) {
   console.warn(

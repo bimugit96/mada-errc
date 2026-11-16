@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { RECORDS } from './data/sampleData.js';
-import { buildSampleViewModel, buildExcelViewModel } from './utils/viewModel.js';
+import { buildSampleViewModel } from './utils/viewModel.js';
 import Sidebar from './components/Sidebar.jsx';
 import Header, { DataBanner } from './components/Header.jsx';
 import Icon from './components/Icons.jsx';
@@ -16,28 +16,39 @@ import ExecUsahawanGauges from './components/ExecUsahawanGauges.jsx';
 import ExecSalesHero from './components/ExecSalesHero.jsx';
 import ExecPerbelanjaanPanel from './components/ExecPerbelanjaanPanel.jsx';
 import PerbelanjaanDashboard from './components/PerbelanjaanDashboard.jsx';
-import usePerbelanjaanExcel from './hooks/usePerbelanjaanExcel.js';
+import useDashboardYear, { defaultDashboardYear, useDashboardYears } from './hooks/useDashboardYear.js';
 import PlaceholderSection from './components/PlaceholderSection.jsx';
-import ExcelImport from './components/ExcelImport.jsx';
 
 export default function App() {
-  // null = mode data contoh; objek = mode data sebenar (Excel diimport)
-  const [excelDataset, setExcelDataset] = useState(null);
-  const [importOpen, setImportOpen] = useState(false);
   const [active, setActive] = useState('ringkasan');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [summarySelection, setSummarySelection] = useState(null);
 
-  // Data modul Perbelanjaan (fail Excel yang dimuat naik) disimpan di
-  // peringkat App supaya kekal apabila pengguna bertukar modul.
-  const perbelanjaan = usePerbelanjaanExcel();
+  const isSummary = active === 'ringkasan';
+  const errcYears = useDashboardYears('errc');
+  const jtppmYears = useDashboardYears('jtppm');
+  const summaryYears = [...new Set([...errcYears.years, ...jtppmYears.years])].sort().reverse();
+  const summaryLoading = errcYears.loading || jtppmYears.loading;
+  const summaryYear = summarySelection ?? defaultDashboardYear(summaryYears);
+  const errc = useDashboardYear('errc', errcYears, isSummary ? summaryYear : undefined);
+  const jtppm = useDashboardYear('jtppm', jtppmYears, isSummary ? summaryYear : undefined);
+  const yearSource = isSummary
+    ? { years: summaryYears, year: summaryYear, setYear: setSummarySelection }
+    : active === 'perbelanjaan' ? jtppm : errc;
+  const summaryErrcMessage = errc.error ||
+    (summaryLoading || errc.loading ? 'Memuatkan data ERRC…' :
+      summaryYear && !errc.model ? `Tiada fail ERRC bagi tahun ${summaryYear}.` : '');
+  const summarySpendingMessage = jtppm.error ||
+    (summaryLoading || jtppm.loading ? 'Memuatkan data JTPPM…' :
+      summaryYear && !jtppm.model ? `Tiada fail JTPPM bagi tahun ${summaryYear}.` : '');
+  const showYear = ['ringkasan', 'usahawan', 'jualan', 'errc', 'laporan', 'perbelanjaan'].includes(active);
+  const showErrcData = !errc.loading && !errc.error;
 
   // Sumber data tunggal: SAMADA data contoh ATAU data Excel yang diimport.
   const viewModel = useMemo(
     () =>
-      excelDataset
-        ? buildExcelViewModel(excelDataset)
-        : buildSampleViewModel(RECORDS),
-    [excelDataset],
+      errc.model || buildSampleViewModel(RECORDS),
+    [errc.model],
   );
 
   const isExcel = viewModel.mode === 'excel';
@@ -89,7 +100,6 @@ export default function App() {
 
       <div className="main">
         <Header
-          onImport={() => setImportOpen(true)}
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
         />
 
@@ -106,14 +116,26 @@ export default function App() {
             <DataBanner
               mode={viewModel.mode}
               meta={viewModel.meta}
-              onImport={() => setImportOpen(true)}
-              onReset={() => setExcelDataset(null)}
             />
           )}
 
         <main className="container">
+          {showYear && (
+            <div className="dashboard-year">
+              <label>
+                Tahun {isSummary ? 'Ringkasan' : active === 'perbelanjaan' ? 'JTPPM' : 'ERRC'}
+                <select className="select" value={yearSource.year}
+                  onChange={(event) => yearSource.setYear(event.target.value)}>
+                  {!yearSource.years.length && <option value="">Tiada tahun tersedia</option>}
+                  {yearSource.years.map((year) => <option key={year}>{year}</option>)}
+                </select>
+              </label>
+              {!isSummary && active !== 'perbelanjaan' && errc.loading && <p role="status">Memuatkan data ERRC…</p>}
+              {!isSummary && active !== 'perbelanjaan' && errc.error && <p role="alert">{errc.error}</p>}
+            </div>
+          )}
           {/* ---------- RINGKASAN (executive dashboard) ---------- */}
-          {active === 'ringkasan' && (
+          {isSummary && (
             <section id="ringkasan" className="section dash ringkasan">
               {/* BAHAGIAN A — BILANGAN USAHAWAN (meter bulat) */}
               <section className="exec-panel exec-panel-gauges">
@@ -128,21 +150,25 @@ export default function App() {
                   </div>
                 </div>
 
-                <ExecUsahawanGauges kpis={viewModel.kpis} />
+                {summaryErrcMessage ? (
+                  <p className="exec-fin-hint">{summaryErrcMessage}</p>
+                ) : <ExecUsahawanGauges kpis={viewModel.kpis} />}
               </section>
 
               {/* BAHAGIAN B — NILAI JUALAN USHAWAN BIMBINGAN MADA */}
               <section className="exec-panel exec-panel-sales">
-                <ExecSalesHero sales={viewModel.sales} />
+                {summaryErrcMessage ? (
+                  <p className="exec-fin-hint">Nilai Jualan · {summaryErrcMessage}</p>
+                ) : <ExecSalesHero sales={viewModel.sales} />}
               </section>
 
               {/* BAHAGIAN C — PRESTASI PERBELANJAAN PROGRAM */}
-              <ExecPerbelanjaanPanel model={perbelanjaan.model} />
+              <ExecPerbelanjaanPanel model={jtppm.model} message={summarySpendingMessage} />
             </section>
           )}
 
           {/* ---------- NILAI JUALAN ---------- */}
-          {active === 'jualan' && (
+          {active === 'jualan' && showErrcData && (
             <section id="jualan" className="section dash jualan-section">
               {/* BARIS 1 — kad utama + kad pecahan IAT / AT / Pemasaran */}
               <div className="dash-row dash-sales jualan-sales">
@@ -165,7 +191,7 @@ export default function App() {
             dan data ERRC dikekalkan sepenuhnya (data dan fungsi
             tidak dibuang, seperti mana-mana modul lain).
           */}
-          {active === 'errc' && (
+          {active === 'errc' && showErrcData && (
             <section id="errc" className="section dash-sub">
               <div className="section-head">
                 <span className="accent" />
@@ -181,7 +207,7 @@ export default function App() {
           )}
 
           {/* ---------- USAHAWAN (Analisis bilangan usahawan) ---------- */}
-          {active === 'usahawan' && (
+          {active === 'usahawan' && showErrcData && (
             <section id="usahawan" className="section dash-sub usaha-section">
               <div className="section-head">
                 <span className="accent" />
@@ -220,18 +246,14 @@ export default function App() {
           {/* ---------- PERBELANJAAN ---------- */}
           {active === 'perbelanjaan' && (
             <PerbelanjaanDashboard
-              status={perbelanjaan.status}
-              model={perbelanjaan.model}
-              error={perbelanjaan.error}
-              onFile={perbelanjaan.handleFile}
-              onReset={perbelanjaan.reset}
-              onImportExcel={() => setImportOpen(true)}
-              onResetExcel={() => setExcelDataset(null)}
+              loading={jtppm.loading}
+              model={jtppm.model}
+              error={jtppm.error}
             />
           )}
 
           {/* ---------- LAPORAN ---------- */}
-          {active === 'laporan' && (
+          {active === 'laporan' && showErrcData && (
             <section id="laporan" className="section dash-sub">
               <div className="section-head">
                 <span className="accent" />
@@ -252,15 +274,7 @@ export default function App() {
         </main>
       </div>
 
-      {importOpen && (
-        <ExcelImport
-          onClose={() => setImportOpen(false)}
-          onImported={(ds) => {
-            setExcelDataset(ds);
-            setImportOpen(false);
-          }}
-        />
-      )}
+
     </div>
   );
 }

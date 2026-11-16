@@ -1,16 +1,3 @@
-/**
- * ============================================================
- *  SCRIPT DEV — jalankan Vite dev server
- * ============================================================
- *  Satu arahan: npm run dev
- *    • Vite dev server → http://localhost:5173
- *
- *  Tiada API backend diperlukan: modul Perbelanjaan membaca
- *  fail Excel sepenuhnya di dalam pelayar (SheetJS).
- *
- *  Tekan Ctrl+C untuk menghentikannya.
- * ============================================================
- */
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -55,3 +42,11 @@ web.on('exit', (code) => {
 });
 
 children.push(web);
+
+const api = spawn(process.execPath, ['server/index.js'], {
+  cwd: root,
+  stdio: 'inherit',
+  env: process.env,
+});
+api.on('exit', (code) => shutdown(code ?? 0));
+children.push(api);

@@ -3628,3 +3628,18 @@ tbody tr:hover {
     flex-wrap: wrap;
   }
 }
+
+.dashboard-year {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem 1rem;
+  margin: 1rem 0;
+}
+
+.dashboard-year label {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  font-weight: 650;
+}

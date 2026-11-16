@@ -20,7 +20,7 @@
 import FinRibbon from './FinRibbon.jsx';
 import PerbelanjaanKpiRow from './PerbelanjaanKpiRow.jsx';
 
-export default function ExecPerbelanjaanPanel({ model }) {
+export default function ExecPerbelanjaanPanel({ model, message }) {
   const totals = model?.totals || null;
 
   return (
@@ -31,8 +31,7 @@ export default function ExecPerbelanjaanPanel({ model }) {
         <PerbelanjaanKpiRow model={model} size="compact" />
       ) : (
         <p className="exec-fin-hint">
-          Muat naik fail Excel perbelanjaan melalui modul Perbelanjaan untuk
-          memaparkan prestasi kewangan di sini.
+          {message || 'Tiada data JTPPM tersedia.'}
         </p>
       )}
     </section>
