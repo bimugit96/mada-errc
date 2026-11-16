@@ -1287,41 +1287,6 @@ tbody tr:hover {
   background: linear-gradient(135deg, #0c4a31, #12683f);
 }
 
-.header-slogan {
-  position: absolute;
-  right: 220px;
-  bottom: 12px;
-  margin: 0;
-  padding: 7px 22px 5px;
-  border-radius: 11px;
-  background: linear-gradient(
-    90deg,
-    rgba(6, 40, 26, 0) 0%,
-    rgba(6, 40, 26, 0.52) 22%,
-    rgba(6, 40, 26, 0.56) 100%
-  );
-  color: #fff;
-  font-family: var(--font);
-  font-style: italic;
-  font-size: 15.5px;
-  line-height: 1.24;
-  text-align: center;
-  text-shadow:
-    0 2px 8px rgba(4, 30, 18, 0.7),
-    0 1px 3px rgba(0, 0, 0, 0.5);
-}
-
-.header-slogan > span {
-  display: block;
-}
-
-.slogan-swash {
-  display: block;
-  width: 145px;
-  height: 10px;
-  margin: 2px auto 0;
-}
-
 .menu-toggle {
   display: none;
   align-items: center;
@@ -3270,17 +3235,6 @@ tbody tr:hover {
   }
 
   .dist-legend {
-    display: none;
-  }
-
-  .header-slogan {
-    right: 215px;
-    font-size: 15px;
-  }
-}
-
-@media (max-width: 1360px) {
-  .header-slogan {
     display: none;
   }
 }

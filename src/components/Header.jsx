@@ -48,27 +48,6 @@ export function Header({ onToggleSidebar }) {
           >
             <Icon name="menu" strokeWidth={2} />
           </button>
-
-        </div>
-
-        <div className="header-slogan" aria-hidden="true">
-          <span>Usahawan Agromakanan</span>
-          <span>Pemacu Kemakmuran Wilayah</span>
-          <svg className="slogan-swash" viewBox="0 0 220 14" fill="none">
-            <path
-              d="M6 10C68 3 148 2 214 8"
-              stroke="url(#swashGrad)"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-            />
-            <defs>
-              <linearGradient id="swashGrad" x1="0" y1="0" x2="220" y2="0" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#fde047" stopOpacity="0.2" />
-                <stop offset="50%" stopColor="#facc15" stopOpacity="1" />
-                <stop offset="100%" stopColor="#eab308" stopOpacity="0.85" />
-              </linearGradient>
-            </defs>
-          </svg>
         </div>
       </div>
     </header>
